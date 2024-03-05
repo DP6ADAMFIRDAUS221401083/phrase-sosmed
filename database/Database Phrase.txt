@@ -1,0 +1,41 @@
+Database name: db_phrase
+
+1. users
+- id_user
+- username
+- email
+- password
+- image
+
+2. profile
+- id_profile
+- username
+- following
+- follower
+- likes
+- status
+
+3. konten
+- id_konten
+- username
+- isi
+- jumlah_like
+- jumlah_repost
+- comment_text
+- comment_username
+- share
+- status
+
+4. notification
+- id_notification
+- username
+- notif_konten
+
+5. trending
+- id_trending
+- kata_tren
+- jumlah_post
+- tanggal
+
+
+NB: Semua huruf kecil le
