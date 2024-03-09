@@ -1,6 +1,6 @@
 <?php
 include '../config/koneksi.php';
-
+date_default_timezone_set('Asia/Jakarta');
 // Memeriksa koneksi
 if ($con->connect_error) {
     die("Koneksi gagal: " . $con->connect_error);
@@ -11,11 +11,12 @@ $loggedInUsername = $_SESSION['username'];
 
 // Query SQL untuk mengambil konten dan likes berdasarkan relasinya
 $sqlKonten = "
-    SELECT konten.id_konten, konten.username, konten.isi, konten.status, likes.id_konten AS liked
+    SELECT konten.id_konten, konten.username, konten.isi,konten.media, konten.status, konten.posted_at, likes.id_konten AS liked
     FROM konten
     LEFT JOIN likes ON konten.id_konten = likes.id_konten AND likes.username = ?
     ORDER BY konten.id_konten DESC
 ";
+
 
 $stmtKonten = $con->prepare($sqlKonten);
 if (!$stmtKonten) {
@@ -105,33 +106,81 @@ if ($resultKonten->num_rows > 0) {
                         }
                     }
                 }
-                echo '</div>';
+                echo '</div>'; 
             }
+            
         }        
+        $current_time = time();
+        $posted_at = strtotime($rowKonten["posted_at"]);
+        $time_diff = $current_time - $posted_at;
+        
+        $minutes_diff = round($time_diff / 60);
+        $hours_diff = round($time_diff / 3600);
+        $days_diff = round($time_diff / 86400);
 
-        echo '<div>';
+        echo '<div class="row ms-2 me-2 mb-2 mt-2 text-start">'; // Tambah margin-top di sini
+        echo '<div class="col-12" style="font-size: smaller; color: #ff5838;">';
+        echo '• &nbsp;'; // Tambahkan &nbsp; untuk memberikan jarak
+        
+        if ($time_diff < 60){
+            echo $time_diff . ' seconds ago';
+        }
+        elseif ($minutes_diff < 60) {
+            // Menit yang lalu
+            echo $minutes_diff . ' minutes ago';
+        } elseif ($hours_diff < 24) {
+            // Jam yang lalu
+            echo $hours_diff . ' hours ago';
+        } else {
+            // Hari yang lalu
+            echo $days_diff . ' days ago';
+        }
+        echo '</div>';
+        echo '</div>';
+        
+
         echo '</div>';
         echo '</div>';
         echo '</div>';
-        echo '</div>';
+
+        // ISI POST
         echo '<div class="row ms-2 me-2 text-start">';
         echo '<div class="col-12">';
+
         if ($rowKonten["status"] === "Repost") {
             echo '<p style="color: #ff5838;"><i class="fas fa-retweet m-1"></i> Repost</p>';
         }
+
         echo '<p style="text-align: justify;">' . $rowKonten["isi"] . '</p>';
         echo '</div>';
+
+        // Tampilkan gambar jika media ada
+        if (!empty($rowKonten["media"])) {
+            echo '<div class="col-12 text-center">';
+            $nama_file = $rowKonten["media"];
+            $lokasi_file = "../img_post/" . $nama_file;
+            if (file_exists($lokasi_file)) {
+                // Perbaiki sintaks style dan penutup tag img
+                echo '<img src="../img_post/' . $rowKonten['media'] . '" alt="Posted Image" class="img-fluid" style="border: 2px solid #000; border-radius: 15px;">';
+            } else {
+                echo "File tidak ditemukan.";
+            }
+            echo '</div>';
+        }
+
         echo '</div>';
         echo '<div class="row ms-2 me-2 mb-4 text-start">';
         echo '<div class="col-12" style="color: #ff5838; font-size: larger;">';
 
-        echo '<i class="fas fa-heart m-2 heart-icon';
-        if ($rowKonten['liked'] !== null) {
-            echo ' clicked';
-        }
-        echo '" onclick="toggleLike(this)" data-id-konten="' . $rowKonten['id_konten'] . '"></i><i class="fas fa-comment m-2" onclick="toggleCommentForm(' . $rowKonten['id_konten'] . ')"></i><i class="fas fa-retweet m-2 repost-icon" onclick="toggleRepost(this)" data-id-konten="' . $rowKonten['id_konten'] . '"></i>';
+        // Menampilkan ikon dengan kondisi "liked" dan penanganan event dengan JavaScript
+        echo '<i class="fas fa-heart m-2 heart-icon' . ($rowKonten['liked'] !== null ? ' clicked' : '') . '" onclick="toggleLike(this)" data-id-konten="' . $rowKonten['id_konten'] . '"></i><i class="fas fa-comment m-2" onclick="toggleCommentForm(' . $rowKonten['id_konten'] . ')"></i><i class="fas fa-retweet m-2 repost-icon" onclick="toggleRepost(this)" data-id-konten="' . $rowKonten['id_konten'] . '"></i>';
         echo '</div>';
         echo '</div>';
+
+
+
+
+
 
         // Display comments for the current post
         
