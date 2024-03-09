@@ -540,52 +540,58 @@
                 </div>
             </div>
         </div>
-        <div class="profile-main">
-        <?php
-            include '../config/koneksi.php';
+            <div class="profile-main">
+            <?php
+                include '../config/koneksi.php';
 
-            // Periksa koneksi
-            if ($con->connect_error) {
-                die("Koneksi gagal: " . $con->connect_error);
-            }
+                // Periksa koneksi
+                if ($con->connect_error) {
+                    die("Koneksi gagal: " . $con->connect_error);
+                }
 
-            // Mengambil username dari sesi yang sedang login
-            if(isset($_SESSION['username'])) {
-                $username = $_SESSION['username'];
+                // Mengambil username dari sesi yang sedang login
+                if(isset($_SESSION['username'])) {
+                    $username = $_SESSION['username'];
 
-                // Ambil nama file dari database berdasarkan username yang sedang login
-                $sql = "SELECT image FROM users WHERE username = '$username'";
-                $result = $con->query($sql);
+                    // Ambil nama file dari database berdasarkan username yang sedang login
+                    $sql = "SELECT image FROM users WHERE username = '$username'";
+                    $result = $con->query($sql);
 
-                if ($result->num_rows > 0) {
-                    // Jika data tersedia
-                    $row = $result->fetch_assoc();
-                    $nama_file = $row["image"];
-                    $lokasi_file = "../img/" . $nama_file;
+                    if ($result->num_rows > 0) {
+                        // Jika data tersedia
+                        $row = $result->fetch_assoc();
+                        $nama_file = $row["image"];
+                        $lokasi_file = "../img/" . $nama_file;
 
-                    // Periksa apakah file ada
-                    if (file_exists($lokasi_file)) {
-                        echo '<img class="profile-picture" src="../img/' . $nama_file . '" alt="Profile Picture">';
+                        // Periksa apakah file ada
+                        if (file_exists($lokasi_file)) {
+                            echo '<img class="profile-picture" src="../img/' . $nama_file . '" alt="Profile Picture">';
+                        } else {
+                            echo "File tidak ditemukan.";
+                        }
                     } else {
-                        echo "File tidak ditemukan.";
+                        echo "Tidak ada data pengguna ditemukan.";
                     }
                 } else {
-                    echo "Tidak ada data pengguna ditemukan.";
+                    echo "Sesi username tidak ditemukan.";
                 }
-            } else {
-                echo "Sesi username tidak ditemukan.";
-            }
 
-            // Menutup koneksi
-            $con->close();
-            ?>
-            <form method="post" action="../function/func_post.php"> 
-                <div class="profile-input">
-                    <input type="text" placeholder="Add Phrase?" name="isi" class="thought-input">
-                    <button class="post-button" type="submit" name="post_button">Post</button>
-                </div>
-            </form>
+                // Menutup koneksi
+                $con->close();
+                ?>
+                <form method="post" action="../function/func_post.php" enctype="multipart/form-data"> 
+                    <div class="profile-input" style="display: flex; align-items: center;">
+                        <input type="text" placeholder="Add Phrase?" name="isi" class="thought-input">
+                        <label for="mediaUpload" style="cursor: pointer; margin-left: 1rem;">
+                            <i class="fa-solid fa-file-import fa-xl" style="color: #ff5838"></i>
+                        </label>
+                        <input type="file" name="media" id="mediaUpload" style="display: none;">
+                        <button class="post-button" type="submit" name="post_button" style="margin-left: 1rem;">Post</button> 
+                    </div>
+                </form>
+                <img class="img-preview" style="max-width: 100px; max-height: 100px; display: none; border: 2px">
         </div>
+        
         <!-- START -->
         <?php include '../function/func_menampilkan_post.php'; ?>
         <!-- END -->
@@ -714,7 +720,7 @@
                 } else {
                     alert(response.message); // Tampilkan pesan jika repost gagal
                 }
-            });
+            });l
         }
         // Fungsi untuk mendapatkan username dari PHP pada halaman
         function getUsername() {
@@ -738,6 +744,24 @@
             }
         }
     </script>
+    <script>
+        function previewImage() {
+            const image = document.querySelector('#mediaUpload');
+            const imagePreview = document.querySelector('.img-preview');
+
+            imagePreview.style.display = 'block';
+
+            const oFReader = new FileReader();
+            oFReader.readAsDataURL(image.files[0]);
+
+            oFReader.onload = function (oFREvent) {
+                imagePreview.src = oFREvent.target.result;
+            }
+        }
+
+        document.querySelector('#mediaUpload').addEventListener('change', previewImage);
+    </script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    
 </body>
 </html>

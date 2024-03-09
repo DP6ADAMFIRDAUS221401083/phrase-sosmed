@@ -7,12 +7,12 @@ if ($con->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate and sanitize the input
+    // Validasi dan membersihkan input
     $isi = filter_input(INPUT_POST, 'isi', FILTER_SANITIZE_STRING);
 
-    // Check if the input is empty or contains inappropriate content
+    // Periksa apakah input kosong atau mengandung konten yang tidak pantas
     if (empty($isi) || containsInappropriateContent($isi)) {
-        echo "<script>alert('Input Forbidden!'); window.location='../home/index.php'</script>";
+        echo "<script>alert('Input Dilarang!'); window.location='../home/index.php'</script>";
         exit();
     }
 
@@ -21,36 +21,52 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $share = 0;
     $status = "Non Repost";
 
-    // Memeriksa apakah sesi username telah diset sebelumnya
-    if (isset($_SESSION['username'])) {
-        $username = $_SESSION['username'];
+    $media_id = null; // Inisialisasi media_id
 
-        // Use prepared statements to prevent SQL injection
-        $stmt = $con->prepare("INSERT INTO konten (username, isi, jumlah_like, jumlah_repost, share, status) 
-                               VALUES (?, ?, ?, ?, ?, ?)");
+    // Periksa apakah file diunggah
+    if(isset($_FILES['media'])){
+        $errors = array();
+        $file_name = $_FILES['media']['name'];
+        $file_size = $_FILES['media']['size'];
+        $file_tmp = $_FILES['media']['tmp_name'];
+        $file_type = $_FILES['media']['type'];
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        // Bind parameters
-        $stmt->bind_param("ssiiis", $username, $isi, $jumlah_like, $jumlah_repost, $share, $status);
+        $extensions = array("jpeg", "jpg", "png");
 
-        // Execute the statement
-        if ($stmt->execute()) {
-            echo "<script>alert('Konten Ditambahkan!'); window.location='../home/index.php'</script>";
-        } else {
-            echo "Error: " . $stmt->error;
+        if(!in_array($file_ext, $extensions)){
+            $errors[] = "Ekstensi tidak diizinkan, pilih file JPEG atau PNG.";
         }
 
-        // Close the statement
-        $stmt->close();
-    } else {
-        echo "Sesi username belum diatur.";
+        if($file_size > 2097152) { // Ukuran maksimum dalam byte (2 MB)
+            $errors[] = 'Ukuran file harus kurang dari 2 MB';
+        }
+
+        if(empty($errors)){
+            $unique_name = uniqid() . '.' . $file_ext;
+
+            if(move_uploaded_file($file_tmp, "../img_post/".$unique_name)){
+                $stmt = $con->prepare("INSERT INTO konten (media, username, isi, jumlah_like, jumlah_repost, share, status, posted_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->bind_param("sssiiss", $unique_name, $_SESSION['username'], $isi, $jumlah_like, $jumlah_repost, $share, $status);
+                $stmt->execute();
+
+                echo "<script>alert('Konten Ditambahkan!'); window.location='../home/index.php'</script>";
+            } else {
+                echo "Gagal memindahkan file yang diunggah.";
+            }
+        } else {
+            foreach($errors as $error){
+                echo $error . "<br>";
+            }
+        }
     }
+
+    $con->close();
 }
 
-$con->close();
-
-// Function to check for inappropriate content
+// Fungsi untuk memeriksa konten yang tidak pantas
 function containsInappropriateContent($input) {
-    // Add your list of inappropriate words or patterns here
+    // Tambahkan daftar kata atau pola yang tidak pantas di sini
     $inappropriateWords = array("kontol", "pepek", "p3p3k", "k0nt0l", "memek", "m3m3k", "dick", "d1ck", "ngentot", "ngentod", "kentod", "ngentid", "ngent0d", "kent0d", "kentot", "kent0t", "anjeng", "4nj3ng", "4njeng", "ah lu", "ahlu");
 
     foreach ($inappropriateWords as $word) {

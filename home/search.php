@@ -532,6 +532,60 @@
                     </form>
                 </div>
             </div>
+<!-- fitur trending-->
+            <div class="row">
+                <div class="col-12">
+                <div class="card rounded-4 text-start text-dark p-2" style="background-color: #fe9840;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 text-start">
+                                <h4>Trending </h4>
+
+                                <?php
+                                // Membuat koneksi ke database 
+                                include '../config/koneksi.php';
+
+                                if ($con->connect_error) {
+                                    die("Koneksi database gagal: " . $con->connect_error);
+                                }
+
+                                // Query SQL untuk mendapatkan kata-kata trending
+                                $sql = "
+                                SELECT i.id_konten, COUNT(*) as interaction_count, k.isi
+                                FROM interaction i
+                                JOIN konten k ON i.id_konten = k.id_konten
+                                WHERE i.timestamp > NOW() - INTERVAL 1 DAY
+                                GROUP BY i.id_konten
+                                ORDER BY interaction_count DESC
+                                LIMIT 10;
+                                ";
+
+                                $result = $con->query($sql);
+
+                                // Memeriksa apakah query berhasil dijalankan
+                                if ($result) {
+                                    echo "<ul>";
+                                    while ($row = $result->fetch_assoc()) {
+                                        // Menampilkan kata-kata trending sebagai daftar
+                                        echo "<li>" . $row["isi"] . "</li>";
+                                    }
+                                    echo "</ul>";
+                                } else {
+                                    // Menampilkan pesan kesalahan jika query gagal
+                                    echo "Error: " . $sql . "<br>" . $con->error;
+                                }
+
+                                // Menutup koneksi
+                                $con->close();
+                                ?>
+                            </div>
+        </div>
+    </div>
+</div>
+
+                </div>
+            </div>
+
             <?php
 include '../config/koneksi.php';
 
@@ -823,6 +877,7 @@ if (isset($_GET['username'])) {
             </div>
         </div>
     </div>
+    
 
 
     <!-- Tautan Bootstrap JavaScript dan jQuery -->
